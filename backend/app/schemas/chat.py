@@ -4,6 +4,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.models.enums import ChatRole
+from app.schemas.generative_ui import UIComponent
 
 
 class ChatSessionCreate(BaseModel):
@@ -34,6 +35,7 @@ class ChatMessageResponse(BaseModel):
     content: str
     metadata: dict[str, Any]
     created_at: datetime
+    ui_blocks: list[UIComponent] = Field(default_factory=list)
 
 
 class ChatRequest(BaseModel):

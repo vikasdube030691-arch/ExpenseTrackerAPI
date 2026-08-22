@@ -1,4 +1,6 @@
+import logging
 from collections.abc import AsyncIterator
+from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -8,7 +10,11 @@ from app.models.chat_session import ChatSessionModel
 from app.models.enums import ChatRole
 from app.repositories.chat_repository import ChatMessageRepository, ChatSessionRepository
 from app.schemas.chat import ChatMessageCreate, ChatRequest, ChatSessionCreate
+from app.schemas.generative_ui import validate_ui_blocks
 from app.services.ai.chat_completion import generate_reply, stream_reply
+from app.services.ai.generative_ui_builder import build_ui_blocks
+
+logger = logging.getLogger(__name__)
 
 
 def _session_title_from(message: str) -> str:
@@ -16,8 +22,26 @@ def _session_title_from(message: str) -> str:
     return (trimmed[:60] or "New conversation") if trimmed else "New conversation"
 
 
+async def _build_assistant_metadata(database: AsyncIOMotorDatabase, user_id: str, user_message: str) -> dict[str, Any]:
+    """Builds the AI's structured UI payload for one reply, validating it
+    exactly as untrusted LLM output before it can be persisted or returned —
+    see `app/schemas/generative_ui.py`. Never raises: a validation failure
+    just means no UI blocks are attached, not a broken chat response."""
+    raw_blocks = await build_ui_blocks(database, user_id, user_message)
+    if not raw_blocks:
+        return {}
+
+    result = validate_ui_blocks(raw_blocks)
+    if result.rejected:
+        logger.warning("generative UI validation rejected %d block(s): %s", len(result.rejected), result.rejected)
+    if not result.blocks:
+        return {}
+    return {"ui_blocks": [block.model_dump(mode="json") for block in result.blocks]}
+
+
 class ChatService:
     def __init__(self, database: AsyncIOMotorDatabase) -> None:
+        self._database = database
         self._sessions = ChatSessionRepository(database)
         self._messages = ChatMessageRepository(database)
 
@@ -70,8 +94,11 @@ class ChatService:
             ChatMessageModel(session_id=session.id, user_id=user_id, role=ChatRole.USER, content=payload.message)
         )
         reply_text = generate_reply(payload.message)
+        metadata = await _build_assistant_metadata(self._database, user_id, payload.message)
         assistant_message = await self._messages.create(
-            ChatMessageModel(session_id=session.id, user_id=user_id, role=ChatRole.ASSISTANT, content=reply_text)
+            ChatMessageModel(
+                session_id=session.id, user_id=user_id, role=ChatRole.ASSISTANT, content=reply_text, metadata=metadata
+            )
         )
         await self._sessions.touch(session.id)
         return session, user_message, assistant_message
@@ -93,9 +120,14 @@ class ChatService:
             async for chunk in stream_reply(payload.message):
                 chunks.append(chunk)
                 yield chunk
+            metadata = await _build_assistant_metadata(self._database, user_id, payload.message)
             await self._messages.create(
                 ChatMessageModel(
-                    session_id=session.id, user_id=user_id, role=ChatRole.ASSISTANT, content="".join(chunks)
+                    session_id=session.id,
+                    user_id=user_id,
+                    role=ChatRole.ASSISTANT,
+                    content="".join(chunks),
+                    metadata=metadata,
                 )
             )
             await self._sessions.touch(session.id)

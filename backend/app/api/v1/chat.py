@@ -26,7 +26,13 @@ def _session_response(session: ChatSessionModel) -> ChatSessionResponse:
 
 
 def _message_response(message: ChatMessageModel) -> ChatMessageResponse:
-    return ChatMessageResponse(**message.model_dump())
+    """`ui_blocks` is stored inside the free-form `metadata` blob (see
+    `ChatService._build_assistant_metadata`) so no DB migration was needed to
+    add it; this lifts it into the response's own typed field so API
+    consumers get a real, documented shape instead of an opaque dict."""
+    data = message.model_dump()
+    ui_blocks = data.get("metadata", {}).pop("ui_blocks", None) or []
+    return ChatMessageResponse(**data, ui_blocks=ui_blocks)
 
 
 @router.post("/", response_model=ChatResponse, summary="Send a chat message")
