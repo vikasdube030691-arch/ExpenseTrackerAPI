@@ -1,0 +1,19 @@
+<mat-card class="metric-card" [class]="'tone-' + data().tone">
+  <mat-card-content>
+    <div class="metric-header">
+      <span class="metric-title">{{ data().title }}</span>
+      @if (data().icon; as icon) {
+        <mat-icon>{{ icon }}</mat-icon>
+      }
+    </div>
+    <div class="metric-value">{{ data().value }}</div>
+    @if (data().change_percent !== null) {
+      <div class="metric-change">
+        @if (trendIcon(); as icon) {
+          <mat-icon class="trend-icon">{{ icon }}</mat-icon>
+        }
+        <span>{{ data().change_percent }}%</span>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

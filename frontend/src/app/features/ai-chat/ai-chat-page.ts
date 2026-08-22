@@ -10,6 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { ChatMessage, ChatSession } from '../../core/models/chat.model';
 import { ChatService } from '../../core/services/chat.service';
+import { GenerativeUiRenderer } from '../generative-ui/generative-ui-renderer/generative-ui-renderer';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../shared/components/error-state/error-state';
 import { LoadingState } from '../../shared/components/loading-state/loading-state';
@@ -29,7 +30,8 @@ import { toApiError } from '../../shared/utils/http-error.util';
     PageHeader,
     LoadingState,
     ErrorState,
-    EmptyState
+    EmptyState,
+    GenerativeUiRenderer
   ],
   templateUrl: './ai-chat-page.html',
   styleUrl: './ai-chat-page.scss'

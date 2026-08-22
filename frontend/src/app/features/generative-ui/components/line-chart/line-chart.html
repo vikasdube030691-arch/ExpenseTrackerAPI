@@ -1,0 +1,26 @@
+<mat-card class="line-chart-card">
+  <mat-card-header>
+    <mat-card-title>{{ data().title }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (renderedSeries().length > 1) {
+      <div class="legend">
+        @for (series of renderedSeries(); track series.name) {
+          <span class="legend-item"><span class="dot" [style.background]="series.color"></span>{{ series.name }}</span>
+        }
+      </div>
+    }
+
+    <svg class="line-chart-svg" [attr.viewBox]="viewBox" preserveAspectRatio="none">
+      @for (series of renderedSeries(); track series.name) {
+        <polyline [attr.points]="series.points" fill="none" [attr.stroke]="series.color" stroke-width="2" />
+      }
+    </svg>
+
+    <div class="x-axis-labels">
+      @for (category of data().categories; track category) {
+        <span>{{ category }}</span>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,13 @@
+<mat-card class="recommendation-card" [class]="'priority-' + data().priority">
+  <mat-card-content>
+    <div class="recommendation-header">
+      <mat-icon>lightbulb</mat-icon>
+      <span class="recommendation-title">{{ data().title }}</span>
+      <span class="priority-badge">{{ data().priority }}</span>
+    </div>
+    <p class="recommendation-body">{{ data().body }}</p>
+    @if (data().action_label; as label) {
+      <div class="recommendation-action">{{ label }}</div>
+    }
+  </mat-card-content>
+</mat-card>

@@ -18,6 +18,11 @@ export interface ChatMessage {
   readonly content: string;
   readonly metadata: Readonly<Record<string, unknown>>;
   readonly created_at: string;
+  /** Generative UI blocks the backend already validated (see
+   * `app/schemas/generative_ui.py`) — still typed `unknown` here because the
+   * renderer (`GenerativeUiRenderer` / `ui-component-validator.ts`) treats
+   * every value on this wire as untrusted regardless of that guarantee. */
+  readonly ui_blocks: readonly unknown[];
 }
 
 export interface ChatRequest {

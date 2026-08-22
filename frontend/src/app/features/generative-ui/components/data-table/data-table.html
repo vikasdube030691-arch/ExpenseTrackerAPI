@@ -1,0 +1,27 @@
+<mat-card class="data-table-card">
+  <mat-card-header>
+    <mat-card-title>{{ data().title }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            @for (column of data().columns; track column) {
+              <th>{{ column }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of data().rows; track $index) {
+            <tr>
+              @for (cell of row; track $index) {
+                <td>{{ cellText(cell) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </mat-card-content>
+</mat-card>

@@ -1,0 +1,40 @@
+.recommendation-card {
+  height: 100%;
+  border-left: 4px solid var(--mat-sys-secondary);
+}
+
+.recommendation-card.priority-high {
+  border-left-color: var(--mat-sys-error);
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recommendation-title {
+  font-weight: 600;
+  flex: 1 1 auto;
+}
+
+.priority-badge {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.recommendation-body {
+  margin: 8px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.recommendation-action {
+  margin-top: 8px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--mat-sys-primary);
+}

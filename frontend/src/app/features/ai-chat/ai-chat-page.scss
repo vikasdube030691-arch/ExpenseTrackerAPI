@@ -102,6 +102,16 @@
   }
 }
 
+.bubble-column {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+}
+
+.bubble-column .bubble {
+  max-width: none;
+}
+
 .bubble {
   max-width: 70%;
   padding: 10px 14px;

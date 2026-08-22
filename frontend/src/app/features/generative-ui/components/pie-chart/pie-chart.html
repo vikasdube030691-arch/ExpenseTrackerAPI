@@ -1,0 +1,17 @@
+<mat-card class="pie-chart-card">
+  <mat-card-header>
+    <mat-card-title>{{ data().title }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content class="pie-content">
+    <div class="donut" [style.background]="gradient()"></div>
+    <ul class="legend">
+      @for (slice of renderedSlices(); track slice.label) {
+        <li>
+          <span class="dot" [style.background]="slice.color"></span>
+          <span class="legend-label">{{ slice.label }}</span>
+          <span class="legend-value">{{ slice.percent | number: '1.0-1' }}%</span>
+        </li>
+      }
+    </ul>
+  </mat-card-content>
+</mat-card>

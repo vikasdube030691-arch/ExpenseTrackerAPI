@@ -1,0 +1,30 @@
+<mat-card class="bar-chart-card">
+  <mat-card-header>
+    <mat-card-title>{{ data().title }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (legend().length > 1) {
+      <div class="legend">
+        @for (item of legend(); track item.name) {
+          <span class="legend-item"><span class="dot" [style.background]="item.color"></span>{{ item.name }}</span>
+        }
+      </div>
+    }
+
+    <div class="bar-rows">
+      @for (group of groups(); track group.category) {
+        <div class="bar-row">
+          <span class="bar-category">{{ group.category }}</span>
+          <div class="bar-segments">
+            @for (bar of group.bars; track bar.seriesName) {
+              <div class="bar-track">
+                <div class="bar-fill" [style.width.%]="bar.percent" [style.background]="bar.color"></div>
+              </div>
+              <span class="bar-value">{{ bar.value | number: '1.0-2' }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

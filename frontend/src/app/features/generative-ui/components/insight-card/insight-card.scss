@@ -1,0 +1,27 @@
+.insight-card {
+  height: 100%;
+  border-left: 4px solid var(--mat-sys-primary);
+}
+
+.insight-card.tone-negative {
+  border-left-color: var(--mat-sys-error);
+}
+
+.insight-card.tone-positive {
+  border-left-color: #1e7e34;
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insight-title {
+  font-weight: 600;
+}
+
+.insight-body {
+  margin: 8px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}

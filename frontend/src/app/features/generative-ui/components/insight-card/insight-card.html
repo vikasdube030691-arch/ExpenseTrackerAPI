@@ -1,0 +1,11 @@
+<mat-card class="insight-card" [class]="'tone-' + data().tone">
+  <mat-card-content>
+    <div class="insight-header">
+      @if (data().icon; as icon) {
+        <mat-icon>{{ icon }}</mat-icon>
+      }
+      <span class="insight-title">{{ data().title }}</span>
+    </div>
+    <p class="insight-body">{{ data().body }}</p>
+  </mat-card-content>
+</mat-card>

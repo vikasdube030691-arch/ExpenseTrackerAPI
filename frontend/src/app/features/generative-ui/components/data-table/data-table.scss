@@ -1,0 +1,26 @@
+.data-table-card {
+  height: 100%;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 6px 12px 6px 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  white-space: nowrap;
+}
+
+th {
+  color: var(--mat-sys-on-surface-variant);
+  font-weight: 500;
+}

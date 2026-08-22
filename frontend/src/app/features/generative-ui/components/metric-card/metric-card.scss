@@ -1,0 +1,39 @@
+.metric-card {
+  height: 100%;
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.metric-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+.trend-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.tone-positive .metric-value {
+  color: #1e7e34;
+}
+
+.tone-negative .metric-value {
+  color: var(--mat-sys-error);
+}

@@ -1,0 +1,10 @@
+@if (blocks().length > 0 || unsafeCount() > 0) {
+  <div class="generative-ui-blocks">
+    @for (block of blocks(); track block.key) {
+      <ng-container [ngComponentOutlet]="block.component" [ngComponentOutletInputs]="{ data: block.data }" />
+    }
+    @if (unsafeCount() > 0) {
+      <app-ui-unknown-fallback [reason]="fallbackReason()" />
+    }
+  </div>
+}

@@ -45,7 +45,12 @@
 
         @for (message of messages(); track message.id) {
           <div class="message-row" [class.from-user]="message.role === 'user'">
-            <div class="bubble">{{ message.content }}</div>
+            <div class="bubble-column">
+              <div class="bubble">{{ message.content }}</div>
+              @if (message.role === 'assistant') {
+                <app-generative-ui-renderer [payload]="message.ui_blocks" />
+              }
+            </div>
           </div>
         }
 
