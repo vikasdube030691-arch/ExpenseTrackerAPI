@@ -10,6 +10,8 @@ from app.models.user import UserModel
 from app.schemas.dashboard import (
     CategoryAnalysisResponse,
     DashboardOverviewResponse,
+    DashboardPreferenceResponse,
+    DashboardPreferenceUpdate,
     DashboardSummaryResponse,
     TrendsResponse,
 )
@@ -76,3 +78,23 @@ async def get_trends(
     service = DashboardService(database)
     data = await service.get_trends(current_user.id, start, end, granularity)
     return TrendsResponse(**data)
+
+
+@router.get("/preferences", response_model=DashboardPreferenceResponse, summary="Get dashboard/display preferences")
+async def get_preferences(
+    current_user: UserModel = Depends(get_current_user), database: AsyncIOMotorDatabase = Depends(get_db)
+) -> DashboardPreferenceResponse:
+    service = DashboardService(database)
+    preferences = await service.get_preferences(current_user.id)
+    return DashboardPreferenceResponse(**preferences.model_dump())
+
+
+@router.put("/preferences", response_model=DashboardPreferenceResponse, summary="Update dashboard/display preferences")
+async def update_preferences(
+    payload: DashboardPreferenceUpdate,
+    current_user: UserModel = Depends(get_current_user),
+    database: AsyncIOMotorDatabase = Depends(get_db),
+) -> DashboardPreferenceResponse:
+    service = DashboardService(database)
+    preferences = await service.update_preferences(current_user.id, payload)
+    return DashboardPreferenceResponse(**preferences.model_dump())

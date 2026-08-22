@@ -119,7 +119,7 @@ uvicorn app.main:app --reload
 pytest
 ```
 
-99 tests, all against `mongomock-motor` (in-memory, no real server needed) — repository tests, service tests, and full HTTP-level router tests (every endpoint below, plus error-envelope shape, request-id propagation, and the login rate limit actually tripping 429).
+102 tests, all against `mongomock-motor` (in-memory, no real server needed) — repository tests, service tests, and full HTTP-level router tests (every endpoint below, plus error-envelope shape, request-id propagation, and the login rate limit actually tripping 429).
 
 ## API
 
@@ -132,12 +132,13 @@ All endpoints are under `/api/v1`. Interactive docs (OpenAPI/Swagger) at `/docs`
 | **transactions** | `GET/POST /transactions`, `GET/PUT/DELETE /transactions/{id}` |
 | **categories** | `GET/POST /categories`, `PUT/DELETE /categories/{id}` |
 | **budgets** | `GET/POST /budgets`, `PUT/DELETE /budgets/{id}` |
-| **dashboard** | `GET /dashboard` (overview), `/summary`, `/category-analysis`, `/trends` |
+| **dashboard** | `GET /dashboard` (overview), `/summary`, `/category-analysis`, `/trends`, `GET/PUT /dashboard/preferences`² |
 | **reports** | `POST /reports/generate`, `GET /reports`, `GET /reports/{id}` |
 | **chat** | `POST /chat`, `POST /chat/stream` (SSE), `GET /chat/sessions`, `GET /chat/sessions/{id}` |
 | **health** | `GET /health` (liveness, unversioned), `GET /ready` (readiness — pings MongoDB, unversioned) |
 
 ¹ Not one of the originally-specified modules — added because `transactions` requires an owned `account_id` and there was otherwise no way to obtain one through the API.
+² Added for the frontend's Settings page (theme, default currency, widget layout) — the `dashboard_preferences` collection and service already existed from the DB-layer task, this just exposes it.
 
 Every endpoint except `/auth/register`, `/auth/login`, `/auth/refresh`, `/health`, and `/ready` requires `Authorization: Bearer <access_token>` and only ever operates on the calling user's own data (see "User isolation" above — the same repository-level guarantee applies through the whole API, not just auth).
 

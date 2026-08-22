@@ -94,3 +94,40 @@ async def test_dashboard_requires_authentication(client):
     response = client.get("/api/v1/dashboard/summary")
 
     assert response.status_code == 401
+
+
+async def test_get_preferences_returns_defaults_for_a_new_user(client):
+    token = register_and_login(client)
+
+    response = client.get("/api/v1/dashboard/preferences", headers=auth_headers(token))
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["default_currency"] == "USD"
+    assert body["theme"] == "system"
+
+
+async def test_update_preferences_persists_changes(client):
+    token = register_and_login(client)
+
+    updated = client.put(
+        "/api/v1/dashboard/preferences",
+        json={"theme": "dark", "default_currency": "eur"},
+        headers=auth_headers(token),
+    )
+    assert updated.status_code == 200
+    assert updated.json()["theme"] == "dark"
+
+    refetched = client.get("/api/v1/dashboard/preferences", headers=auth_headers(token))
+    assert refetched.json()["theme"] == "dark"
+    assert refetched.json()["default_currency"] == "eur"
+
+
+async def test_preferences_are_isolated_between_users(client):
+    token_a = register_and_login(client, email="alice@example.com")
+    client.put("/api/v1/dashboard/preferences", json={"theme": "dark"}, headers=auth_headers(token_a))
+    token_b = register_and_login(client, email="bob@example.com")
+
+    prefs_b = client.get("/api/v1/dashboard/preferences", headers=auth_headers(token_b)).json()
+
+    assert prefs_b["theme"] == "system"
