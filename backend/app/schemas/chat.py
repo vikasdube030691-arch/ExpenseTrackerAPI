@@ -34,3 +34,19 @@ class ChatMessageResponse(BaseModel):
     content: str
     metadata: dict[str, Any]
     created_at: datetime
+
+
+class ChatRequest(BaseModel):
+    session_id: str | None = Field(default=None, description="Omit to start a new session")
+    message: str = Field(min_length=1, max_length=10000)
+
+
+class ChatResponse(BaseModel):
+    session_id: str
+    user_message: ChatMessageResponse
+    assistant_message: ChatMessageResponse
+
+
+class ChatSessionDetailResponse(BaseModel):
+    session: ChatSessionResponse
+    messages: list[ChatMessageResponse]

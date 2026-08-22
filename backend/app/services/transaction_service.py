@@ -57,11 +57,17 @@ class TransactionService:
         return transaction
 
     async def list_transactions(
-        self, user_id: str, filters: TransactionFilter, *, page: int = 1, page_size: int = 20
+        self,
+        user_id: str,
+        filters: TransactionFilter,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+        sort: list[tuple[str, int]] | None = None,
     ) -> tuple[list[TransactionModel], int]:
         skip = (page - 1) * page_size
         return await self._transactions.search(
-            user_id, skip=skip, limit=page_size, **filters.model_dump(exclude_none=True)
+            user_id, skip=skip, limit=page_size, sort=sort, **filters.model_dump(exclude_none=True)
         )
 
     async def update_transaction(
@@ -78,6 +84,16 @@ class TransactionService:
         updated = await self._transactions.update_by_id(transaction_id, update_fields)
         if updated is None:
             raise DocumentNotFoundError("transactions", transaction_id)
+
+        # amount/type/account changes each shift what the account balance should be;
+        # reverse the old effect and apply the new one so it stays reconciled even
+        # when the transaction moved to a different account.
+        if {"amount", "transaction_type", "account_id"} & update_fields.keys():
+            old_signed = existing.amount if existing.transaction_type == TransactionType.INCOME else -existing.amount
+            new_signed = updated.amount if updated.transaction_type == TransactionType.INCOME else -updated.amount
+            await self._accounts.adjust_balance(existing.account_id, -old_signed)
+            await self._accounts.adjust_balance(updated.account_id, new_signed)
+
         return updated
 
     async def delete_transaction(self, user_id: str, transaction_id: str) -> None:

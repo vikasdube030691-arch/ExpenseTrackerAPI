@@ -65,10 +65,19 @@ class TransactionRepository(BaseRepository[TransactionModel]):
         return query
 
     async def search(
-        self, user_id: str, *, skip: int = 0, limit: int = 20, **filters: Any
+        self,
+        user_id: str,
+        *,
+        skip: int = 0,
+        limit: int = 20,
+        sort: list[tuple[str, int]] | None = None,
+        **filters: Any,
     ) -> tuple[list[TransactionModel], int]:
         query = self._build_filter_query(user_id, **filters)
-        return await self.paginate(query, skip=skip, limit=limit, sort=[("transaction_date", -1)])
+        return await self.paginate(query, skip=skip, limit=limit, sort=sort or [("transaction_date", -1)])
+
+    async def count_filtered(self, user_id: str, **filters: Any) -> int:
+        return await self.count(self._build_filter_query(user_id, **filters))
 
     async def sum_by_type(
         self, user_id: str, transaction_type: str, start_date: datetime, end_date: datetime
@@ -87,6 +96,22 @@ class TransactionRepository(BaseRepository[TransactionModel]):
         result = await self.collection.aggregate(pipeline).to_list(length=1)
         return result[0]["total"] if result else 0.0
 
+    async def sum_amount(
+        self,
+        user_id: str,
+        *,
+        category_id: str | None = None,
+        transaction_type: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> float:
+        query = self._build_filter_query(
+            user_id, category_id=category_id, transaction_type=transaction_type, start_date=start_date, end_date=end_date
+        )
+        pipeline = [{"$match": query}, {"$group": {"_id": None, "total": {"$sum": "$amount"}}}]
+        result = await self.collection.aggregate(pipeline).to_list(length=1)
+        return result[0]["total"] if result else 0.0
+
     async def sum_by_category(
         self, user_id: str, start_date: datetime, end_date: datetime
     ) -> list[dict[str, Any]]:
@@ -101,4 +126,40 @@ class TransactionRepository(BaseRepository[TransactionModel]):
             {"$group": {"_id": "$category_id", "total": {"$sum": "$amount"}, "count": {"$sum": 1}}},
             {"$sort": {"total": -1}},
         ]
-        return await self.collection.aggregate(pipeline).to_list(length=None)
+        raw = await self.collection.aggregate(pipeline).to_list(length=None)
+        return [{"category_id": str(row["_id"]), "total": row["total"], "count": row["count"]} for row in raw]
+
+    async def trends(
+        self, user_id: str, start_date: datetime, end_date: datetime, granularity: str = "month"
+    ) -> list[dict[str, Any]]:
+        date_format = "%Y-%m" if granularity == "month" else "%Y-%m-%d"
+        pipeline = [
+            {
+                "$match": {
+                    "user_id": ObjectId(user_id),
+                    "transaction_date": {"$gte": start_date, "$lte": end_date},
+                    "is_deleted": False,
+                }
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "period": {"$dateToString": {"format": date_format, "date": "$transaction_date"}},
+                        "type": "$transaction_type",
+                    },
+                    "total": {"$sum": "$amount"},
+                }
+            },
+        ]
+        raw = await self.collection.aggregate(pipeline).to_list(length=None)
+
+        buckets: dict[str, dict[str, float]] = {}
+        for row in raw:
+            period = row["_id"]["period"]
+            bucket = buckets.setdefault(period, {"income": 0.0, "expense": 0.0})
+            bucket[row["_id"]["type"]] = row["total"]
+
+        return [
+            {"period": period, "income": values["income"], "expense": values["expense"]}
+            for period, values in sorted(buckets.items())
+        ]

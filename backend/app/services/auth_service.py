@@ -10,9 +10,9 @@ from app.models.common import utcnow
 from app.models.refresh_token import RefreshTokenModel
 from app.repositories.refresh_token_repository import RefreshTokenRepository
 
-# NOTE: This service persists opaque refresh tokens (the `refresh_tokens` collection).
-# Access-token issuance (JWT signing) is an application/auth-layer concern that sits on
-# top of this DB layer and is intentionally out of scope here.
+# NOTE: This service persists opaque refresh tokens (the `refresh_tokens` collection),
+# i.e. it implements session management + token revocation. JWT access-token issuance
+# lives in `app.core.jwt` and is composed with this service by `AuthenticationService`.
 
 
 class AuthService:
@@ -45,3 +45,9 @@ class AuthService:
 
     async def revoke_all_sessions(self, user_id: str) -> int:
         return await self._refresh_tokens.revoke_all_for_user(user_id)
+
+    async def get_session_by_raw_token(self, raw_token: str) -> RefreshTokenModel | None:
+        return await self._refresh_tokens.get_by_token_hash(hash_token(raw_token))
+
+    async def revoke_session(self, session_id: str) -> None:
+        await self._refresh_tokens.revoke(session_id)
