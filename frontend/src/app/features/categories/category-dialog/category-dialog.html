@@ -1,0 +1,53 @@
+<div class="dialog-header">
+  <mat-icon class="header-icon">{{ isEditMode ? 'edit' : 'add_circle' }}</mat-icon>
+  <h2 mat-dialog-title>{{ isEditMode ? 'Edit category' : 'New category' }}</h2>
+  <button mat-icon-button type="button" class="close-button" aria-label="Close" (click)="cancel()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" maxlength="100" autofocus />
+        @if (form.controls.name.invalid && form.controls.name.touched) {
+          <mat-error>Enter a category name.</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Type</mat-label>
+        <mat-select formControlName="type">
+          <mat-option value="expense">Expense</mat-option>
+          <mat-option value="income">Income</mat-option>
+        </mat-select>
+        @if (isEditMode) {
+          <mat-hint>Type can't be changed after a category is created.</mat-hint>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row two-col">
+      <mat-form-field appearance="outline">
+        <mat-label>Icon</mat-label>
+        <input matInput formControlName="icon" placeholder="e.g. restaurant" />
+        <mat-icon matSuffix>{{ form.controls.icon.value || 'category' }}</mat-icon>
+        <mat-hint>Any Material Symbols icon name</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Color</mat-label>
+        <input matInput type="color" formControlName="color" />
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-flat-button color="primary" type="submit">{{ isEditMode ? 'Save changes' : 'Create category' }}</button>
+  </mat-dialog-actions>
+</form>

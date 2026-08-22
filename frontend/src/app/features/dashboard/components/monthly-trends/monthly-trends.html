@@ -1,0 +1,43 @@
+<mat-card class="trends-card">
+  <mat-card-header>
+    <mat-card-title>Trends</mat-card-title>
+    <div class="header-spacer"></div>
+    <mat-button-toggle-group
+      [value]="trends().granularity"
+      (change)="onGranularityChange($event.value)"
+      aria-label="Trend granularity"
+    >
+      <mat-button-toggle value="month">Monthly</mat-button-toggle>
+      <mat-button-toggle value="day">Daily</mat-button-toggle>
+    </mat-button-toggle-group>
+  </mat-card-header>
+  <mat-card-content>
+    @if (bars().length === 0) {
+      <app-empty-state icon="show_chart" message="Not enough data yet to show a trend." />
+    } @else {
+      <div class="legend">
+        <span class="legend-item"><span class="dot income"></span>Income</span>
+        <span class="legend-item"><span class="dot expense"></span>Expense</span>
+      </div>
+      <div class="trend-rows">
+        @for (bar of bars(); track bar.period) {
+          <div class="trend-row">
+            <span class="trend-period">{{ bar.period }}</span>
+            <div class="trend-bars">
+              <div class="trend-bar-track">
+                <div class="trend-bar-fill income" [style.width.%]="bar.incomePercent"></div>
+              </div>
+              <span class="trend-value">{{ bar.incomeLabel }}</span>
+            </div>
+            <div class="trend-bars">
+              <div class="trend-bar-track">
+                <div class="trend-bar-fill expense" [style.width.%]="bar.expensePercent"></div>
+              </div>
+              <span class="trend-value">{{ bar.expenseLabel }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

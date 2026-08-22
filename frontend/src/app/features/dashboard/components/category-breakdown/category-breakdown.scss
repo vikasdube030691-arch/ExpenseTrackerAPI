@@ -1,0 +1,31 @@
+.category-breakdown-card {
+  height: 100%;
+}
+
+.bar-row {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.bar-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--mat-sys-surface-container-highest);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}

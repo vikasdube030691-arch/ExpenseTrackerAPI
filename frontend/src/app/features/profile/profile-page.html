@@ -1,0 +1,61 @@
+<app-page-header title="Profile" subtitle="Your account details" />
+
+@if (loading()) {
+  <app-loading-state message="Loading profile…" />
+} @else if (errorMessage(); as error) {
+  <app-error-state [message]="error" (retry)="load()" />
+} @else if (user(); as currentUser) {
+  <mat-card class="profile-card">
+    <mat-card-content>
+      <div class="profile-header">
+        <span class="avatar">{{ userInitial() }}</span>
+        <div class="profile-headline">
+          <span class="full-name">{{ currentUser.full_name }}</span>
+          <span class="email">{{ currentUser.email }}</span>
+        </div>
+      </div>
+
+      <dl class="details">
+        <div class="detail-row">
+          <dt>Role</dt>
+          <dd class="capitalize">{{ currentUser.role }}</dd>
+        </div>
+        <div class="detail-row">
+          <dt>Status</dt>
+          <dd>
+            <span class="badge" [class.badge-positive]="currentUser.is_active" [class.badge-negative]="!currentUser.is_active">
+              {{ currentUser.is_active ? 'Active' : 'Inactive' }}
+            </span>
+          </dd>
+        </div>
+        <div class="detail-row">
+          <dt>Email verification</dt>
+          <dd>
+            <span class="badge" [class.badge-positive]="currentUser.is_verified" [class.badge-neutral]="!currentUser.is_verified">
+              {{ currentUser.is_verified ? 'Verified' : 'Not verified' }}
+            </span>
+          </dd>
+        </div>
+        <div class="detail-row">
+          <dt>Member since</dt>
+          <dd>{{ currentUser.created_at | date: 'longDate' }}</dd>
+        </div>
+      </dl>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="security-card">
+    <mat-card-header>
+      <mat-card-title>Security</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p>Sign out of every device where you're currently logged in, including this one.</p>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button mat-stroked-button color="warn" [disabled]="signingOutEverywhere()" (click)="logoutEverywhere()">
+        <mat-icon>logout</mat-icon>
+        Log out of all devices
+      </button>
+    </mat-card-actions>
+  </mat-card>
+}

@@ -1,0 +1,18 @@
+.budget-usage-card {
+  height: 100%;
+}
+
+.progress-row {
+  margin-bottom: 14px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}

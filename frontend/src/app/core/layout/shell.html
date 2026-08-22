@@ -1,0 +1,73 @@
+@if (isLoading()) {
+  <mat-progress-bar mode="indeterminate" class="top-loading-bar" />
+}
+
+<mat-toolbar color="primary" class="toolbar">
+  <button mat-icon-button type="button" aria-label="Toggle navigation" (click)="toggleSidenav()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span class="brand">Expense Tracker</span>
+  <span class="spacer"></span>
+  <button mat-icon-button type="button" [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+    <span class="user-avatar">{{ userInitial() }}</span>
+  </button>
+  <mat-menu #userMenu="matMenu">
+    <div class="user-menu-header">
+      <div class="user-menu-name">{{ currentUser()?.full_name }}</div>
+      <div class="user-menu-email">{{ currentUser()?.email }}</div>
+    </div>
+    <mat-divider />
+    <a mat-menu-item routerLink="/profile">
+      <mat-icon>person</mat-icon>
+      <span>Profile</span>
+    </a>
+    <a mat-menu-item routerLink="/settings">
+      <mat-icon>settings</mat-icon>
+      <span>Settings</span>
+    </a>
+    <mat-divider />
+    <button mat-menu-item type="button" (click)="logout()">
+      <mat-icon>logout</mat-icon>
+      <span>Log out</span>
+    </button>
+  </mat-menu>
+</mat-toolbar>
+
+<mat-sidenav-container class="body-container">
+  <mat-sidenav
+    [mode]="sidenavMode()"
+    [opened]="sidenavOpened()"
+    (closedStart)="sidenavOpened.set(false)"
+    class="sidenav"
+  >
+    <mat-nav-list>
+      @for (item of primaryNavItems; track item.path) {
+        <a
+          mat-list-item
+          [routerLink]="item.path"
+          routerLinkActive="active-nav-item"
+          (click)="closeSidenavOnMobile()"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+      <mat-divider />
+      @for (item of secondaryNavItems; track item.path) {
+        <a
+          mat-list-item
+          [routerLink]="item.path"
+          routerLinkActive="active-nav-item"
+          (click)="closeSidenavOnMobile()"
+        >
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content">
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>

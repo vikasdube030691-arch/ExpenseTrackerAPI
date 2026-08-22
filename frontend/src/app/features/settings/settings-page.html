@@ -1,0 +1,107 @@
+<app-page-header title="Settings" subtitle="Appearance, dashboard, and accounts" />
+
+<mat-card class="settings-card">
+  <mat-card-header>
+    <mat-card-title>Appearance</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <mat-button-toggle-group [value]="theme()" (change)="setTheme($event.value)" aria-label="Theme">
+      <mat-button-toggle value="system">
+        <mat-icon>brightness_auto</mat-icon>
+        System
+      </mat-button-toggle>
+      <mat-button-toggle value="light">
+        <mat-icon>light_mode</mat-icon>
+        Light
+      </mat-button-toggle>
+      <mat-button-toggle value="dark">
+        <mat-icon>dark_mode</mat-icon>
+        Dark
+      </mat-button-toggle>
+    </mat-button-toggle-group>
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="settings-card">
+  <mat-card-header>
+    <mat-card-title>Dashboard</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (preferencesLoading()) {
+      <app-loading-state message="Loading preferences…" />
+    } @else if (preferencesError(); as error) {
+      <app-error-state [message]="error" (retry)="loadPreferences()" />
+    } @else {
+      <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()" novalidate>
+        <mat-form-field appearance="outline" class="currency-field">
+          <mat-label>Default currency</mat-label>
+          <input matInput formControlName="default_currency" maxlength="3" />
+        </mat-form-field>
+
+        <div class="widget-toggles">
+          <span class="widget-toggles-label">Optional dashboard widgets</span>
+          @for (option of widgetOptions; track option.key) {
+            <mat-checkbox
+              [checked]="isWidgetEnabled(option.key)"
+              (change)="toggleWidget(option.key, $event.checked)"
+            >
+              {{ option.label }}
+            </mat-checkbox>
+          }
+        </div>
+
+        <button mat-flat-button color="primary" type="submit" [disabled]="savingPreferences()">
+          Save preferences
+        </button>
+      </form>
+    }
+  </mat-card-content>
+</mat-card>
+
+<mat-card class="settings-card">
+  <mat-card-header>
+    <mat-card-title>Accounts</mat-card-title>
+    <span class="spacer"></span>
+    <button mat-stroked-button type="button" (click)="openCreateAccountDialog()">
+      <mat-icon>add</mat-icon>
+      Add account
+    </button>
+  </mat-card-header>
+  <mat-card-content>
+    @if (accountsLoading()) {
+      <app-loading-state message="Loading accounts…" />
+    } @else if (accountsError(); as error) {
+      <app-error-state [message]="error" (retry)="loadAccounts()" />
+    } @else if (accounts().length === 0) {
+      <app-empty-state
+        icon="account_balance_wallet"
+        message="No accounts yet. Add one to start recording transactions."
+        actionLabel="Add account"
+        (action)="openCreateAccountDialog()"
+      />
+    } @else {
+      <div class="account-list">
+        @for (account of accounts(); track account.id) {
+          <div class="account-row" [class.inactive]="!account.is_active">
+            <div class="account-info">
+              <span class="account-name">{{ account.name }}</span>
+              <span class="account-meta">{{ account.account_type }} · {{ account.currency }}</span>
+            </div>
+            <span class="account-balance">{{ account.balance | number: '1.2-2' }} {{ account.currency }}</span>
+            @if (!account.is_active) {
+              <span class="inactive-badge">Inactive</span>
+            }
+            <div class="account-actions">
+              <button mat-icon-button aria-label="Edit account" (click)="openEditAccountDialog(account)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button aria-label="Delete account" (click)="deleteAccount(account)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

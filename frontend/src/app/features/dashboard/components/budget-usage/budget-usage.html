@@ -1,0 +1,25 @@
+<mat-card class="budget-usage-card">
+  <mat-card-header>
+    <mat-card-title>Budget Usage</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (budgetProgress().length === 0) {
+      <app-empty-state
+        icon="savings"
+        message="No active budgets yet."
+        actionLabel="Create a budget"
+        (action)="goToBudgets()"
+      />
+    } @else {
+      @for (item of budgetProgress(); track item.budget_id) {
+        <div class="progress-row">
+          <div class="progress-label">
+            <span>{{ item.name ?? 'Overall budget' }}</span>
+            <span>{{ detail(item) }}</span>
+          </div>
+          <mat-progress-bar mode="determinate" [value]="ratio(item) * 100" [color]="color(item)" />
+        </div>
+      }
+    }
+  </mat-card-content>
+</mat-card>

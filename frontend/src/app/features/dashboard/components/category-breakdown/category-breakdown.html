@@ -1,0 +1,22 @@
+<mat-card class="category-breakdown-card">
+  <mat-card-header>
+    <mat-card-title>Expense Categories</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (bars().length === 0) {
+      <app-empty-state icon="category" message="No categorized spending in this period yet." />
+    } @else {
+      @for (bar of bars(); track bar.categoryId) {
+        <div class="bar-row">
+          <div class="bar-label">
+            <span>{{ bar.name }}</span>
+            <span>{{ formatCurrency(bar.total) }}</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="bar.percent" [style.background]="bar.color"></div>
+          </div>
+        </div>
+      }
+    }
+  </mat-card-content>
+</mat-card>

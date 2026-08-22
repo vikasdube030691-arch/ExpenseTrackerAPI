@@ -1,0 +1,82 @@
+.settings-card {
+  margin-bottom: 20px;
+  max-width: 640px;
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.currency-field {
+  display: block;
+  max-width: 200px;
+}
+
+.widget-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 20px;
+}
+
+.widget-toggles-label {
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin-bottom: 4px;
+}
+
+.account-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+
+  &.inactive {
+    opacity: 0.6;
+  }
+}
+
+.account-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.account-name {
+  font-weight: 500;
+}
+
+.account-meta {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: capitalize;
+}
+
+.account-balance {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.inactive-badge {
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-variant);
+}
+
+.account-actions {
+  display: flex;
+  flex-shrink: 0;
+}

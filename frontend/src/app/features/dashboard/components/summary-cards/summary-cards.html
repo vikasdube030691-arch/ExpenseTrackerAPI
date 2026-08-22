@@ -1,0 +1,12 @@
+<div class="summary-grid">
+  <app-stat-card label="Total Income" [value]="incomeValue()" icon="trending_up" tone="positive" />
+  <app-stat-card label="Total Expenses" [value]="expenseValue()" icon="trending_down" tone="negative" />
+  <app-stat-card label="Savings" [value]="savingsValue()" icon="savings" [tone]="savingsTone()" />
+  <app-stat-card
+    label="Savings Rate"
+    [value]="savingsPercent() + '%'"
+    icon="percent"
+    [tone]="savingsTone()"
+    [hint]="summary().transaction_count + ' transactions this period'"
+  />
+</div>

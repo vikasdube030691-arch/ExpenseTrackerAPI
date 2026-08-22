@@ -1,0 +1,42 @@
+@if (widget(); as w) {
+  @if (w.kind === 'stat') {
+    <mat-card class="widget-card">
+      <mat-card-content>
+        <div class="stat-row">
+          <span class="stat-title">{{ w.title }}</span>
+          <mat-icon>{{ w.icon }}</mat-icon>
+        </div>
+        <div class="stat-value" [class]="'tone-' + w.tone">{{ w.value }}</div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (w.kind === 'insight') {
+    <mat-card class="widget-card insight-card" [class]="'tone-' + w.tone">
+      <mat-card-content>
+        <div class="insight-header">
+          <mat-icon>{{ w.icon }}</mat-icon>
+          <span class="insight-title">{{ w.title }}</span>
+        </div>
+        <p class="insight-body">{{ w.body }}</p>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (w.kind === 'progress-list') {
+    <mat-card class="widget-card">
+      <mat-card-content>
+        <h3 class="progress-list-title">{{ w.title }}</h3>
+        @for (item of w.items; track item.label) {
+          <div class="progress-row">
+            <div class="progress-label">
+              <span>{{ item.label }}</span>
+              <span>{{ item.detail }}</span>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="item.ratio * 100" [color]="progressBarColor(item.ratio)" />
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+}

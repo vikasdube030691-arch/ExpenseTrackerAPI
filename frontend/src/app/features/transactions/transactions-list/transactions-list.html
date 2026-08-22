@@ -1,0 +1,123 @@
+<app-page-header title="Transactions" subtitle="All your income and expenses">
+  <a pageHeaderActions mat-flat-button color="primary" routerLink="/transactions/new">
+    <mat-icon>add</mat-icon>
+    Add transaction
+  </a>
+</app-page-header>
+
+<form [formGroup]="filterForm" class="filter-form">
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search</mat-label>
+    <input matInput formControlName="search" placeholder="Merchant or description" />
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Type</mat-label>
+    <mat-select formControlName="transaction_type">
+      <mat-option value="">All</mat-option>
+      <mat-option value="income">Income</mat-option>
+      <mat-option value="expense">Expense</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Category</mat-label>
+    <mat-select formControlName="category_id">
+      <mat-option value="">All</mat-option>
+      @for (category of categories(); track category.id) {
+        <mat-option [value]="category.id">{{ category.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>From</mat-label>
+    <input matInput [matDatepicker]="fromPicker" formControlName="start_date" />
+    <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+    <mat-datepicker #fromPicker />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>To</mat-label>
+    <input matInput [matDatepicker]="toPicker" formControlName="end_date" />
+    <mat-datepicker-toggle matSuffix [for]="toPicker" />
+    <mat-datepicker #toPicker />
+  </mat-form-field>
+
+  <mat-form-field appearance="outline">
+    <mat-label>Sort by</mat-label>
+    <mat-select [value]="sort()" (selectionChange)="onSortChange($event.value)">
+      @for (field of sortFields; track field.value) {
+        <mat-option [value]="field.value">{{ field.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</form>
+
+@if (loading()) {
+  <app-loading-state message="Loading transactions…" />
+} @else if (errorMessage(); as error) {
+  <app-error-state [message]="error" (retry)="load()" />
+} @else if (transactions().length === 0) {
+  <app-empty-state icon="receipt_long" message="No transactions match your filters." />
+} @else {
+  <div class="table-container">
+    <table mat-table [dataSource]="transactions()">
+      <ng-container matColumnDef="transaction_date">
+        <th mat-header-cell *matHeaderCellDef>Date</th>
+        <td mat-cell *matCellDef="let transaction">{{ transaction.transaction_date | date: 'mediumDate' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="merchant">
+        <th mat-header-cell *matHeaderCellDef>Merchant / Description</th>
+        <td mat-cell *matCellDef="let transaction">{{ transaction.merchant || transaction.description || '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="category">
+        <th mat-header-cell *matHeaderCellDef>Category</th>
+        <td mat-cell *matCellDef="let transaction">{{ categoryName()(transaction.category_id) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="transaction_type">
+        <th mat-header-cell *matHeaderCellDef>Type</th>
+        <td mat-cell *matCellDef="let transaction">{{ transaction.transaction_type }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef>Amount</th>
+        <td
+          mat-cell
+          *matCellDef="let transaction"
+          [class.amount-income]="transaction.transaction_type === 'income'"
+          [class.amount-expense]="transaction.transaction_type === 'expense'"
+        >
+          {{ formatAmount(transaction) }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let transaction">
+          <a mat-icon-button [routerLink]="['/transactions', transaction.id, 'edit']" aria-label="Edit">
+            <mat-icon>edit</mat-icon>
+          </a>
+          <button mat-icon-button (click)="deleteTransaction(transaction)" aria-label="Delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+
+  <mat-paginator
+    [length]="total()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageIndex()"
+    [pageSizeOptions]="[10, 20, 50]"
+    (page)="onPageChange($event)"
+  />
+}

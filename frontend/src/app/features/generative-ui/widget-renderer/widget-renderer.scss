@@ -1,0 +1,72 @@
+.widget-card {
+  height: 100%;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.tone-positive {
+  color: #1e7e34;
+}
+
+.tone-negative {
+  color: var(--mat-sys-error);
+}
+
+.insight-card {
+  border-left: 4px solid var(--mat-sys-primary);
+}
+
+.insight-card.tone-negative {
+  border-left-color: var(--mat-sys-error);
+}
+
+.insight-card.tone-positive {
+  border-left-color: #1e7e34;
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insight-title {
+  font-weight: 600;
+}
+
+.insight-body {
+  margin: 8px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.progress-list-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.progress-row {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}

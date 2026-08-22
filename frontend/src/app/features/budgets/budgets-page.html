@@ -1,0 +1,40 @@
+<app-page-header title="Budgets" subtitle="Set spending limits and track progress">
+  <button pageHeaderActions mat-flat-button color="primary" (click)="openCreateDialog()">
+    <mat-icon>add</mat-icon>
+    Add budget
+  </button>
+</app-page-header>
+
+@if (loading()) {
+  <app-loading-state message="Loading budgets…" />
+} @else if (errorMessage(); as error) {
+  <app-error-state [message]="error" (retry)="load()" />
+} @else if (budgets().length === 0) {
+  <app-empty-state icon="savings" message="No budgets yet." actionLabel="Add budget" (action)="openCreateDialog()" />
+} @else {
+  <div class="budget-grid">
+    @for (budget of budgets(); track budget.id) {
+      <mat-card class="budget-card">
+        <mat-card-header>
+          <mat-card-title>{{ budget.name ?? categoryName()(budget.category_id) }}</mat-card-title>
+          <mat-card-subtitle>{{ categoryName()(budget.category_id) }} · {{ budget.period }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="progress-label">
+            <span>{{ formatAmount(spent(budget)) }} of {{ formatAmount(budget.amount) }}</span>
+            <span>{{ (ratio(budget) * 100) | number: '1.0-0' }}%</span>
+          </div>
+          <mat-progress-bar mode="determinate" [value]="ratio(budget) * 100" [color]="progressColor(budget)" />
+        </mat-card-content>
+        <mat-card-actions align="end">
+          <button mat-icon-button aria-label="Edit budget" (click)="openEditDialog(budget)">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button aria-label="Delete budget" (click)="deleteBudget(budget)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+}

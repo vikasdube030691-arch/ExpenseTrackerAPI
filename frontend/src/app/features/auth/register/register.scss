@@ -1,0 +1,35 @@
+.auth-page {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.submit-button {
+  margin-top: 8px;
+  height: 40px;
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+.notice {
+  color: #855400;
+}
+
+.switch-link {
+  margin-top: 16px;
+  text-align: center;
+}

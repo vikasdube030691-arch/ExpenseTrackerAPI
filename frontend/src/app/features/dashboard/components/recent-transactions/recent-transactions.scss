@@ -1,0 +1,13 @@
+.recent-transactions-card {
+  height: 100%;
+}
+
+.amount-income {
+  color: #1e7e34;
+  font-weight: 600;
+}
+
+.amount-expense {
+  color: var(--mat-sys-error);
+  font-weight: 600;
+}

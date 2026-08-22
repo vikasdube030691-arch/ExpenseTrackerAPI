@@ -1,0 +1,58 @@
+<app-page-header title="Categories" subtitle="Organize your income and expenses">
+  <button pageHeaderActions mat-flat-button color="primary" (click)="openCreateDialog()">
+    <mat-icon>add</mat-icon>
+    Add category
+  </button>
+</app-page-header>
+
+<mat-button-toggle-group
+  class="filter-toggle"
+  [value]="filter()"
+  (change)="onFilterChange($event.value)"
+  aria-label="Filter by type"
+>
+  <mat-button-toggle value="all">All</mat-button-toggle>
+  <mat-button-toggle value="expense">Expense</mat-button-toggle>
+  <mat-button-toggle value="income">Income</mat-button-toggle>
+</mat-button-toggle-group>
+
+@if (loading()) {
+  <app-loading-state message="Loading categories…" />
+} @else if (errorMessage(); as error) {
+  <app-error-state [message]="error" (retry)="load()" />
+} @else if (filteredCategories().length === 0) {
+  <app-empty-state
+    icon="category"
+    message="No categories yet."
+    actionLabel="Add category"
+    (action)="openCreateDialog()"
+  />
+} @else {
+  <div class="category-grid">
+    @for (category of filteredCategories(); track category.id) {
+      <mat-card class="category-card">
+        <mat-card-content>
+          <div class="category-swatch" [style.background]="category.color || '#9e9e9e'">
+            <mat-icon>{{ category.icon || 'category' }}</mat-icon>
+          </div>
+          <div class="category-info">
+            <span class="category-name">{{ category.name }}</span>
+            <span class="category-type">{{ category.type }}</span>
+          </div>
+          @if (category.is_system) {
+            <span class="system-badge" title="Built-in category">System</span>
+          } @else {
+            <div class="category-actions">
+              <button mat-icon-button aria-label="Edit category" (click)="openEditDialog(category)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button aria-label="Delete category" (click)="deleteCategory(category)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+}

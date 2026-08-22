@@ -1,0 +1,80 @@
+<div class="dialog-header">
+  <mat-icon class="header-icon">savings</mat-icon>
+  <h2 mat-dialog-title>{{ isEditMode ? 'Edit budget' : 'New budget' }}</h2>
+  <button mat-icon-button type="button" class="close-button" aria-label="Close" (click)="cancel()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <mat-dialog-content>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" placeholder="Optional label, e.g. Groceries" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Category</mat-label>
+        <mat-select formControlName="category_id">
+          <mat-option value="">Overall (all categories)</mat-option>
+          @for (category of expenseCategories; track category.id) {
+            <mat-option [value]="category.id">{{ category.name }}</mat-option>
+          }
+        </mat-select>
+        @if (isEditMode) {
+          <mat-hint>Category can't be changed after a budget is created.</mat-hint>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row two-col">
+      <mat-form-field appearance="outline">
+        <mat-label>Amount</mat-label>
+        <input matInput type="number" step="0.01" formControlName="amount" />
+        @if (form.controls.amount.invalid && form.controls.amount.touched) {
+          <mat-error>Enter an amount greater than 0.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Currency</mat-label>
+        <input matInput formControlName="currency" maxlength="3" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Period</mat-label>
+        <mat-select formControlName="period">
+          @for (period of periods; track period.value) {
+            <mat-option [value]="period.value">{{ period.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row two-col">
+      <mat-form-field appearance="outline">
+        <mat-label>Start date</mat-label>
+        <input matInput [matDatepicker]="startPicker" formControlName="start_date" />
+        <mat-datepicker-toggle matSuffix [for]="startPicker" />
+        <mat-datepicker #startPicker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>End date</mat-label>
+        <input matInput [matDatepicker]="endPicker" formControlName="end_date" />
+        <mat-datepicker-toggle matSuffix [for]="endPicker" />
+        <mat-datepicker #endPicker />
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-flat-button color="primary" type="submit">{{ isEditMode ? 'Save changes' : 'Create budget' }}</button>
+  </mat-dialog-actions>
+</form>

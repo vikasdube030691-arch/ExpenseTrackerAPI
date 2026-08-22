@@ -1,0 +1,91 @@
+.trends-card {
+  height: 100%;
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+}
+
+.header-spacer {
+  flex: 1 1 auto;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+
+  &.income {
+    background: #1e7e34;
+  }
+
+  &.expense {
+    background: var(--mat-sys-error);
+  }
+}
+
+.trend-row {
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.trend-period {
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.trend-bars {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.trend-bar-track {
+  flex: 1 1 auto;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--mat-sys-surface-container-highest);
+  overflow: hidden;
+}
+
+.trend-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+
+  &.income {
+    background: #1e7e34;
+  }
+
+  &.expense {
+    background: var(--mat-sys-error);
+  }
+}
+
+.trend-value {
+  width: 70px;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  text-align: right;
+}

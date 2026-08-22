@@ -1,0 +1,25 @@
+.form-card {
+  max-width: 720px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  mat-form-field {
+    flex: 1 1 200px;
+  }
+}
+
+.full-width {
+  flex: 1 1 100%;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}

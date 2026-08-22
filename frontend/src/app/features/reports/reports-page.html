@@ -1,0 +1,160 @@
+<app-page-header title="Reports" subtitle="Generate and review financial reports" />
+
+<mat-card class="generate-card">
+  <mat-card-header>
+    <mat-card-title>Generate a report</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <form [formGroup]="generateForm" (ngSubmit)="generate()" class="generate-form" novalidate>
+      <mat-form-field appearance="outline">
+        <mat-label>Report type</mat-label>
+        <mat-select formControlName="report_type">
+          @for (type of reportTypes; track type.value) {
+            <mat-option [value]="type.value">{{ type.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Format</mat-label>
+        <mat-select formControlName="format">
+          @for (format of reportFormats; track format.value) {
+            <mat-option [value]="format.value">{{ format.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>From</mat-label>
+        <input matInput [matDatepicker]="fromPicker" formControlName="period_start" />
+        <mat-datepicker-toggle matSuffix [for]="fromPicker" />
+        <mat-datepicker #fromPicker />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>To</mat-label>
+        <input matInput [matDatepicker]="toPicker" formControlName="period_end" />
+        <mat-datepicker-toggle matSuffix [for]="toPicker" />
+        <mat-datepicker #toPicker />
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="generating()" class="generate-button">
+        @if (generating()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          <ng-container>
+            <mat-icon>summarize</mat-icon>
+            Generate
+          </ng-container>
+        }
+      </button>
+    </form>
+  </mat-card-content>
+</mat-card>
+
+@if (selectedReport(); as report) {
+  <mat-card class="detail-card">
+    <mat-card-header>
+      <mat-card-title>Report details</mat-card-title>
+      <span class="spacer"></span>
+      <button mat-icon-button aria-label="Close" (click)="closeDetail()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="detail-meta">
+        <mat-chip-set>
+          <mat-chip>{{ report.report_type }}</mat-chip>
+          <mat-chip>{{ report.format }}</mat-chip>
+          <mat-chip>{{ report.status }}</mat-chip>
+        </mat-chip-set>
+        <span>{{ report.period_start | date: 'mediumDate' }} – {{ report.period_end | date: 'mediumDate' }}</span>
+      </div>
+
+      @if (report.error_message) {
+        <app-error-state [message]="report.error_message" />
+      }
+
+      @if (report.file) {
+        <a mat-stroked-button [href]="report.file.url" target="_blank" rel="noopener" class="download-link">
+          <mat-icon>download</mat-icon>
+          Download {{ report.file.filename }}
+        </a>
+      }
+
+      @if (report.data) {
+        <table class="data-table">
+          @for (entry of formatEntries(report); track entry[0]) {
+            <tr>
+              <th>{{ entry[0] }}</th>
+              <td>{{ formatValue(entry[1]) }}</td>
+            </tr>
+          }
+        </table>
+      }
+    </mat-card-content>
+  </mat-card>
+}
+
+<h2 class="section-title">Past reports</h2>
+
+@if (loading()) {
+  <app-loading-state message="Loading reports…" />
+} @else if (errorMessage(); as error) {
+  <app-error-state [message]="error" (retry)="load()" />
+} @else if (reports().length === 0) {
+  <app-empty-state icon="summarize" message="No reports generated yet." />
+} @else {
+  <div class="table-container">
+    <table mat-table [dataSource]="reports()">
+      <ng-container matColumnDef="report_type">
+        <th mat-header-cell *matHeaderCellDef>Type</th>
+        <td mat-cell *matCellDef="let report">{{ report.report_type }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="format">
+        <th mat-header-cell *matHeaderCellDef>Format</th>
+        <td mat-cell *matCellDef="let report">{{ report.format }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let report">
+          <span class="status-badge" [class]="'status-' + report.status">{{ report.status }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="period">
+        <th mat-header-cell *matHeaderCellDef>Period</th>
+        <td mat-cell *matCellDef="let report">
+          {{ report.period_start | date: 'shortDate' }} – {{ report.period_end | date: 'shortDate' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="created_at">
+        <th mat-header-cell *matHeaderCellDef>Generated</th>
+        <td mat-cell *matCellDef="let report">{{ report.created_at | date: 'medium' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let report">
+          <button mat-icon-button aria-label="View report" (click)="viewReport(report)">
+            <mat-icon>visibility</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+
+  <mat-paginator
+    [length]="total()"
+    [pageSize]="pageSize()"
+    [pageIndex]="pageIndex()"
+    [pageSizeOptions]="[10, 20, 50]"
+    (page)="onPageChange($event)"
+  />
+}

@@ -1,0 +1,46 @@
+<app-page-header title="Dashboard" subtitle="Your finances at a glance" />
+
+@if (loading()) {
+  <app-loading-state message="Loading your dashboard…" />
+} @else if (errorMessage(); as error) {
+  <app-error-state [message]="error" (retry)="load()" />
+} @else if (hasData()) {
+  <div class="dashboard-grid">
+    @if (summary(); as summary) {
+      <section class="full-width">
+        <app-summary-cards [summary]="summary" />
+      </section>
+    }
+
+    <section class="full-width">
+      <h2 class="section-title">AI Insights</h2>
+      <div class="insights-grid">
+        @for (widget of insights(); track widget.id) {
+          <app-widget-renderer [widget]="widget" />
+        }
+      </div>
+    </section>
+
+    <section class="half-width">
+      <app-recent-transactions [transactions]="recentTransactions()" [categories]="categoryList()" />
+    </section>
+
+    @if (showBudgetUsage()) {
+      <section class="half-width">
+        <app-budget-usage [budgetProgress]="budgetProgress()" />
+      </section>
+    }
+
+    @if (showCategoryBreakdown()) {
+      <section class="half-width">
+        <app-category-breakdown [breakdown]="breakdown()" [categories]="categoryList()" />
+      </section>
+    }
+
+    @if (showMonthlyTrends() && trends(); as trendsValue) {
+      <section class="half-width">
+        <app-monthly-trends [trends]="trendsValue" (granularityChange)="onGranularityChange($event)" />
+      </section>
+    }
+  </div>
+}

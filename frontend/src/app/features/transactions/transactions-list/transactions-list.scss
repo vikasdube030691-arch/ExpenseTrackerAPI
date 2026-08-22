@@ -1,0 +1,33 @@
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  mat-form-field {
+    min-width: 160px;
+  }
+}
+
+.search-field {
+  flex: 1 1 220px;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+}
+
+.amount-income {
+  color: #1e7e34;
+  font-weight: 600;
+}
+
+.amount-expense {
+  color: var(--mat-sys-error);
+  font-weight: 600;
+}

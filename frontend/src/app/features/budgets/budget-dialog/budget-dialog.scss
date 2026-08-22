@@ -1,0 +1,39 @@
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px 8px 24px;
+
+  h2[mat-dialog-title] {
+    flex: 1 1 auto;
+    margin: 0;
+  }
+}
+
+.header-icon {
+  flex-shrink: 0;
+  color: var(--mat-sys-primary);
+}
+
+.close-button {
+  flex-shrink: 0;
+  margin-right: -8px;
+}
+
+mat-dialog-content {
+  padding: 0 24px 8px;
+}
+
+.form-row {
+  margin-bottom: 8px;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.full-width {
+  width: 100%;
+}

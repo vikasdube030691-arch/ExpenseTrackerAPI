@@ -1,0 +1,89 @@
+<app-page-header title="AI Chat" subtitle="Ask questions about your spending" />
+
+<div class="chat-layout">
+  <aside class="session-list">
+    <button mat-flat-button color="primary" class="new-chat-button" (click)="startNewChat()">
+      <mat-icon>add_comment</mat-icon>
+      New chat
+    </button>
+
+    @if (sessionsLoading()) {
+      <app-loading-state message="Loading conversations…" />
+    } @else if (sessionsError(); as error) {
+      <app-error-state [message]="error" (retry)="loadSessions()" />
+    } @else if (sessions().length === 0) {
+      <app-empty-state icon="forum" message="No conversations yet." />
+    } @else {
+      <ul class="sessions">
+        @for (session of sessions(); track session.id) {
+          <li>
+            <button
+              type="button"
+              class="session-item"
+              [class.active]="session.id === activeSessionId()"
+              (click)="selectSession(session)"
+            >
+              <span class="session-title">{{ session.title }}</span>
+              <span class="session-date">{{ session.last_message_at | date: 'short' }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+
+  <section class="conversation">
+    @if (messagesLoading()) {
+      <app-loading-state message="Loading conversation…" />
+    } @else if (messagesError(); as error) {
+      <app-error-state [message]="error" />
+    } @else {
+      <div class="message-scroll">
+        @if (messages().length === 0 && !pendingUserText()) {
+          <app-empty-state icon="smart_toy" message="Ask about your spending, budgets, or trends to get started." />
+        }
+
+        @for (message of messages(); track message.id) {
+          <div class="message-row" [class.from-user]="message.role === 'user'">
+            <div class="bubble">{{ message.content }}</div>
+          </div>
+        }
+
+        @if (pendingUserText(); as pending) {
+          <div class="message-row from-user">
+            <div class="bubble">{{ pending }}</div>
+          </div>
+        }
+
+        @if (sending()) {
+          <div class="message-row">
+            <div class="bubble">
+              {{ streamingReply() }}
+              @if (!streamingReply()) {
+                <mat-spinner diameter="16" />
+              }
+            </div>
+          </div>
+        }
+
+        <div #scrollAnchor></div>
+      </div>
+    }
+
+    <form class="composer" (ngSubmit)="send()">
+      <mat-form-field appearance="outline" class="composer-field">
+        <mat-label>Message</mat-label>
+        <textarea
+          matInput
+          [formControl]="messageControl"
+          rows="1"
+          placeholder="Ask about your finances…"
+          (keydown)="onInputKeydown($event)"
+        ></textarea>
+      </mat-form-field>
+      <button mat-icon-button color="primary" type="submit" [disabled]="sending() || !messageControl.value.trim()" aria-label="Send">
+        <mat-icon>send</mat-icon>
+      </button>
+    </form>
+  </section>
+</div>
