@@ -1,9 +1,13 @@
+import pytest
+from pydantic import ValidationError
+
 from app.schemas.generative_ui import (
     MAX_UI_BLOCKS,
     ActionButtonComponent,
     AlertComponent,
     BarChartComponent,
     DataTableComponent,
+    GenerativeUiSelection,
     InsightCardComponent,
     LineChartComponent,
     MetricCardComponent,
@@ -169,3 +173,28 @@ def test_icon_name_rejects_non_glyph_strings():
     )
 
     assert result.blocks == []
+
+
+def test_generative_ui_selection_accepts_a_mixed_list_of_valid_blocks():
+    selection = GenerativeUiSelection.model_validate(
+        {
+            "blocks": [
+                {"component": "metric_card", "title": "Spent", "value": "$100"},
+                {"component": "alert", "severity": "warning", "message": "Over budget"},
+            ]
+        }
+    )
+
+    assert len(selection.blocks) == 2
+
+
+def test_generative_ui_selection_rejects_unknown_component_via_discriminated_union():
+    with pytest.raises(ValidationError):
+        GenerativeUiSelection.model_validate({"blocks": [{"component": "raw_html_widget", "html": "<script>"}]})
+
+
+def test_generative_ui_selection_rejects_more_than_the_max_blocks():
+    with pytest.raises(ValidationError):
+        GenerativeUiSelection.model_validate(
+            {"blocks": [{"component": "metric_card", "title": "M", "value": "$1"} for _ in range(MAX_UI_BLOCKS + 1)]}
+        )

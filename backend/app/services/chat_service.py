@@ -4,6 +4,9 @@ from typing import Any
 
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
+from app.agents.llm import is_ai_configured
+from app.agents.runner import run_agent_turn, stream_agent_turn
+from app.core.config import settings
 from app.core.exceptions import DocumentNotFoundError
 from app.models.chat_message import ChatMessageModel
 from app.models.chat_session import ChatSessionModel
@@ -15,6 +18,11 @@ from app.services.ai.chat_completion import generate_reply, stream_reply
 from app.services.ai.generative_ui_builder import build_ui_blocks
 
 logger = logging.getLogger(__name__)
+
+# The LangChain/LangGraph agent layer (app/agents, app/tools) only runs when
+# ANTHROPIC_API_KEY is configured; otherwise every method below falls back to
+# the placeholder responder + rule-based UI builder used before that layer
+# existed, so local dev and the test suite never need a live Anthropic key.
 
 
 def _session_title_from(message: str) -> str:
@@ -86,15 +94,26 @@ class ChatService:
             return await self.get_session(user_id, payload.session_id)
         return await self.create_session(user_id, ChatSessionCreate(title=_session_title_from(payload.message)))
 
+    async def _recent_history(self, user_id: str, session_id: str) -> list[ChatMessageModel]:
+        messages, _ = await self._messages.list_for_session(session_id, user_id, limit=200)
+        return messages[-settings.ai_history_message_limit :]
+
     async def send_message(
         self, user_id: str, payload: ChatRequest
     ) -> tuple[ChatSessionModel, ChatMessageModel, ChatMessageModel]:
         session = await self._resolve_session(user_id, payload)
+        history = await self._recent_history(user_id, session.id)
         user_message = await self._messages.create(
             ChatMessageModel(session_id=session.id, user_id=user_id, role=ChatRole.USER, content=payload.message)
         )
-        reply_text = generate_reply(payload.message)
-        metadata = await _build_assistant_metadata(self._database, user_id, payload.message)
+
+        if is_ai_configured():
+            reply_text, ui_blocks = await run_agent_turn(self._database, user_id, payload.message, history)
+            metadata: dict[str, Any] = {"ui_blocks": ui_blocks} if ui_blocks else {}
+        else:
+            reply_text = generate_reply(payload.message)
+            metadata = await _build_assistant_metadata(self._database, user_id, payload.message)
+
         assistant_message = await self._messages.create(
             ChatMessageModel(
                 session_id=session.id, user_id=user_id, role=ChatRole.ASSISTANT, content=reply_text, metadata=metadata
@@ -111,11 +130,28 @@ class ChatService:
         returns an async generator that yields assistant reply chunks and persists
         the full assistant message once streaming completes."""
         session = await self._resolve_session(user_id, payload)
+        history = await self._recent_history(user_id, session.id)
         await self._messages.create(
             ChatMessageModel(session_id=session.id, user_id=user_id, role=ChatRole.USER, content=payload.message)
         )
 
-        async def _generate() -> AsyncIterator[str]:
+        async def _generate_with_agents() -> AsyncIterator[str]:
+            result: dict[str, Any] = {}
+            async for chunk in stream_agent_turn(self._database, user_id, payload.message, history, result=result):
+                yield chunk
+            ui_blocks = result.get("ui_blocks", [])
+            await self._messages.create(
+                ChatMessageModel(
+                    session_id=session.id,
+                    user_id=user_id,
+                    role=ChatRole.ASSISTANT,
+                    content=result.get("reply_text", ""),
+                    metadata={"ui_blocks": ui_blocks} if ui_blocks else {},
+                )
+            )
+            await self._sessions.touch(session.id)
+
+        async def _generate_placeholder() -> AsyncIterator[str]:
             chunks: list[str] = []
             async for chunk in stream_reply(payload.message):
                 chunks.append(chunk)
@@ -132,4 +168,4 @@ class ChatService:
             )
             await self._sessions.touch(session.id)
 
-        return session, _generate()
+        return session, (_generate_with_agents() if is_ai_configured() else _generate_placeholder())

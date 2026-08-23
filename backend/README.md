@@ -30,12 +30,15 @@ backend/
     services/                      Business logic; the only layer route handlers should call
       auth_service.py               Refresh-token/session persistence + revocation (the `refresh_tokens` collection)
       authentication_service.py     Orchestrates UserService + AuthService + app.core.jwt for register/login/logout/refresh
-      ai/chat_completion.py          Placeholder reply generator (no LLM wired up) — swap this to add a real one
+      ai/chat_completion.py          Placeholder reply generator, used when ANTHROPIC_API_KEY is unset
+      ai/generative_ui_builder.py     Rule-based UI-block builder for the placeholder path
     api/
       deps.py                       get_db, get_current_user (Bearer JWT), pagination_params, make_sort_dependency
       v1/api.py                      Aggregates every router under /api/v1
       v1/{auth,accounts,transactions,categories,budgets,dashboard,reports,chat}.py
-    agents/, tools/, mcp/          Reserved for a future AI-agent layer (still unused; chat is a plain request/response service)
+    agents/                         LangGraph supervisor + 6 agents (expense/analytics/budget/report/generative-ui/memory) — see "AI agent layer" below
+    tools/                          LangChain tools each agent calls; every factory closes over the authenticated user_id, never exposes it as an LLM-settable arg
+    mcp/                            Reserved — the same tool-backed functions could be exposed over MCP for external agent consumption; not needed while agents run in-process via LangGraph
     main.py                         FastAPI app: lifespan, CORS, request-context + rate-limit middleware, error handlers, routers
   tests/
     conftest.py                    In-memory Mongo (mongomock-motor) fixture — no real server needed for tests
@@ -67,6 +70,7 @@ backend/
 | `generated_reports` | Async-generated report metadata + file reference | yes |
 | `dashboard_preferences` | One document per user; widget layout, theme, default currency | no (single mutable doc) |
 | `audit_logs` | Immutable action trail | no (append-only, never deleted) |
+| `user_memories` | Long-term memories the Memory Manager agent chose to keep about a user | no (hard-deletable — "forget X" really erases it) |
 
 Soft delete is a boolean `is_deleted` + `deleted_at` on documents users can meaningfully "undo" or that need an audit trail. `audit_logs` and `chat_messages` are append-only by design (`CreatedAtDocument` — only `created_at`, no `updated_at`), so soft delete doesn't apply.
 
@@ -162,7 +166,43 @@ Every endpoint except `/auth/register`, `/auth/login`, `/auth/refresh`, `/health
 
 ### AI Chat
 
-`ChatService` persists real sessions/messages, but no LLM is wired up — `app/services/ai/chat_completion.py` is a placeholder that echoes a canned response. `POST /chat/stream` demonstrates the real Server-Sent-Events contract the frontend should expect (`event: session` with the session id, then one `event: delta` per chunk, then `event: done`) using that placeholder; swap `generate_reply`/`stream_reply` for a real provider (e.g. the Claude API) without touching `ChatService` or the router.
+`ChatService` persists real sessions/messages. If `ANTHROPIC_API_KEY` is set, it routes each turn through the LangChain/LangGraph agent layer described below; otherwise it falls back to `app/services/ai/chat_completion.py`, a placeholder that echoes a canned response, so local dev and the whole test suite never need a live Anthropic key. `POST /chat/stream` demonstrates the Server-Sent-Events contract the frontend expects (`event: session`, then one `event: delta` per chunk, then `event: done`) on either path.
+
+### AI agent layer (`app/agents`, `app/tools`)
+
+```
+User message
+  -> load_memories        (UserMemoryService.recall — recent long-term memories for this user)
+  -> detect_intent         (structured-output classification: expense | analytics | budget | report | memory | general)
+  -> supervisor routing    (a conditional edge picks the matching agent node)
+  -> the chosen agent       (a bounded tool-calling loop: bind tools, call the model, execute any
+                             tool calls, feed results back, repeat until a plain-text answer)
+  -> generative_ui_agent   (structured output -> app/schemas/generative_ui.py's UIComponent schema)
+  -> END                   (reply text + UI blocks, both attached to the persisted assistant message)
+```
+
+`app/agents/graph.py` builds this as a `langgraph.StateGraph` (`build_graph(database)`) and is what the non-streaming `POST /chat` runs end to end. `POST /chat/stream` needs token-level streaming, which a compiled graph mixing streaming and non-streaming nodes doesn't cleanly support, so `app/agents/runner.py`'s `stream_agent_turn` reuses the identical routing table, intent classifier, and agent objects the graph is built from directly rather than going through `StateGraph.compile()` — both paths make the same routing decision from the same agents; only how the final agent's answer is produced (all at once vs. token by token) differs.
+
+**Agents** (`app/agents/*_agent.py`), each a `DomainAgent` (system prompt + a tool factory) run through the shared loop in `app/agents/tool_loop.py`:
+
+| Agent | Handles | Tools (`app/tools/*.py`) |
+|---|---|---|
+| Expense | search/add/update/delete/categorize transactions | `expense_tools.py` |
+| Analytics | monthly summaries, period comparisons, trends, top categories, savings | `analytics_tools.py` |
+| Budget | budgets, usage, overspending alerts | `budget_tools.py` |
+| Report | generating/retrieving reports | `report_tools.py` |
+| Memory Manager | remember/recall/update/forget long-term memories | `memory_tools.py` |
+| General | greetings/unclear messages | none |
+
+**Critical security rule: the LLM never queries MongoDB.** Every tool is a plain async function wrapping one of the existing `app/services/*.py` classes (which already scope every query by `user_id` at the repository layer — see "User isolation" above). Each `build_xxx_tools(database, user_id)` factory closes over `user_id` supplied by `ChatService` from the authenticated JWT; `user_id` never appears in a tool's `args_schema`, so there is no argument an AI response could set to read or write another user's data. `tests/tools/test_user_scoping.py` asserts this structurally across every tool rather than trusting each module to get it right on its own, and separately proves cross-user isolation for the memory tools end to end.
+
+**Generative UI Agent** (`app/agents/generative_ui_agent.py`) is bound via `.with_structured_output()` directly to `GenerativeUiSelection` in `app/schemas/generative_ui.py` — the same strict schema (`extra="forbid"`, no HTML, no URL fields, a closed action-key enum) every other generative-UI path is validated against, so there is only one definition of "safe" in this codebase. Its output is re-validated through `validate_ui_blocks` anyway before being attached to the assistant message, as insurance against a future model swap that enforces the schema less strictly than Claude does.
+
+**Session-based conversation history**: `ChatService._recent_history` loads the last `AI_HISTORY_MESSAGE_LIMIT` (default 20) persisted messages for the session and converts them to LangChain messages (`app/agents/runner.py::history_to_messages`) before invoking the graph/runner, so every turn continues the real, DB-persisted conversation rather than starting fresh each time.
+
+**Long-term memory** (`app/models/user_memory.py`, `user_memories` collection) is separate from chat history — it holds durable facts/preferences the Memory Manager agent chose to keep, is hard-deletable (no soft-delete flag) so "forget X" actually erases it, and uses plain case-insensitive substring search rather than a vector store (no embeddings pipeline exists in this version — swap `UserMemoryRepository.search_for_user` for a vector-backed lookup if that stops being enough).
+
+Configure via `.env`: `ANTHROPIC_API_KEY` (blank = fallback path), `AI_MODEL` (default `claude-sonnet-5`), `AI_MAX_TOOL_ITERATIONS` (default 6, caps each agent's tool-calling loop), `AI_HISTORY_MESSAGE_LIMIT` (default 20).
 
 ## Cross-cutting concerns
 
@@ -193,6 +233,7 @@ Local dev note: the Angular dev server proxies `/api/*` to this backend (see `fr
 
 - **No multi-document transactions.** `TransactionService` adjusts an account's balance as a second (and on update, sometimes third) write after the transaction write itself. This is sequential, not atomic, because MongoDB multi-document transactions require a replica set (a standalone `mongod` — the default local dev setup — rejects `session.start_transaction()`). For production, run MongoDB as a (single-node) replica set and wrap these calls in a client session transaction.
 - **In-memory rate limiting.** Fine for one instance; a multi-instance deployment needs `slowapi`'s Redis-backed storage so the limit is shared across processes.
-- **No AI provider wired up.** `/chat` and `/chat/stream` work end-to-end (persistence, SSE) but reply with a canned placeholder — see "AI Chat" above.
+- **No AI provider configured by default.** The LangGraph/LangChain agent layer (`app/agents`, `app/tools`) is fully built and tested, but only activates when `ANTHROPIC_API_KEY` is set in `.env`; without it, `/chat` and `/chat/stream` reply with the canned placeholder — see "AI Chat" / "AI agent layer" above.
+- **Memory recall has no embeddings.** `UserMemoryRepository.search_for_user` is a plain case-insensitive substring match, not semantic search — fine for the small number of memories one user accumulates, not a real vector store.
 - **No report file export.** `/reports/generate` returns real computed numbers in `data`, but never populates `file` (no PDF/CSV writer or object storage exists yet) — see "Reports" above.
 - **`recurring_transactions` has no API.** The model/repository/service exist (from the earlier DB-layer task) but nothing schedules them into actual transactions yet, and no router was requested for this task.

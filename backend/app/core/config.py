@@ -26,6 +26,15 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:4200"]
 
+    # The LangChain/LangGraph agent layer (app/agents, app/tools) is only active
+    # when a key is configured; otherwise ChatService falls back to the
+    # placeholder in app/services/ai/chat_completion.py so local dev and the
+    # test suite never need a live Anthropic account.
+    anthropic_api_key: str | None = None
+    ai_model: str = "claude-sonnet-5"
+    ai_max_tool_iterations: int = 6
+    ai_history_message_limit: int = 20
+
     # Browsers special-case `localhost` as a secure context, so Secure cookies work
     # fine there even over http. Default True; only flip to false via env if you're
     # deliberately testing over plain http on a non-localhost host.

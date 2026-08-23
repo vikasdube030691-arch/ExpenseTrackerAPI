@@ -69,6 +69,9 @@ INDEX_SPECS: dict[str, list[IndexModel]] = {
         IndexModel([("action", ASCENDING), ("created_at", DESCENDING)], name="action_created"),
         IndexModel([("resource_type", ASCENDING), ("resource_id", ASCENDING)], name="resource_lookup"),
     ],
+    Collections.USER_MEMORIES: [
+        IndexModel([("user_id", ASCENDING), ("created_at", DESCENDING)], name="user_created"),
+    ],
 }
 
 

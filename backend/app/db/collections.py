@@ -11,6 +11,7 @@ class Collections:
     GENERATED_REPORTS = "generated_reports"
     DASHBOARD_PREFERENCES = "dashboard_preferences"
     AUDIT_LOGS = "audit_logs"
+    USER_MEMORIES = "user_memories"
 
     @classmethod
     def all(cls) -> list[str]:
@@ -27,4 +28,5 @@ class Collections:
             cls.GENERATED_REPORTS,
             cls.DASHBOARD_PREFERENCES,
             cls.AUDIT_LOGS,
+            cls.USER_MEMORIES,
         ]

@@ -254,6 +254,17 @@ _COMPONENT_MODELS: dict[str, type[SafeModel]] = {
 }
 
 
+class GenerativeUiSelection(SafeModel):
+    """Structured-output target for the Generative UI Agent
+    (`app/agents/generative_ui_agent.py`): binding the LLM call to this model
+    (via `.with_structured_output`) forces the model into this exact schema —
+    the same one `validate_ui_blocks` enforces for every other path data
+    reaches the UI through, so there is only ever one definition of "safe" in
+    this codebase, not a parallel one for the agent path."""
+
+    blocks: list[UIComponent] = Field(default_factory=list, max_length=MAX_UI_BLOCKS)
+
+
 class UIBlockRejection(BaseModel):
     index: int
     component: str | None
